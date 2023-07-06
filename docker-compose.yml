@@ -31,6 +31,8 @@ services:
     container_name: ewm-service
     ports:
       - "8080:8080"
+#      - "7777:8888"
+
     depends_on:
       - ewm-db
       - stats-server
@@ -39,6 +41,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=ewm
       - SPRING_DATASOURCE_PASSWORD=ewm
       - STATS_SERVER_URL=http://stats-server:9090
+#      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8888
 
 
   ewm-db:

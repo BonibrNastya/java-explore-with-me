@@ -39,9 +39,8 @@ public class EventsAdmin {
                                      @RequestParam(required = false, defaultValue = "10")
                                      @Positive Integer size) {
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size,
-                Sort.by("eventDate").descending());
+                Sort.by("id").descending());
         List<EventFullDto> events = eventService.getAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
-        log.info(events.toString());
         return events;
     }
 
