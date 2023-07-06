@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS events
     category_id BIGINT NOT NULL
     CONSTRAINT events_category_id_fk
     REFERENCES categories (id) ON DELETE CASCADE,
-    confirmed_requests INTEGER,
+    confirmed_requests INTEGER NOT NULL,
     created_on TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     description VARCHAR(7000) NOT NULL,
     event_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,

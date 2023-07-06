@@ -77,14 +77,16 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getAllPublic(String text, Boolean paid, Boolean onlyAvailable, List<Long> categories,
                                             LocalDateTime rangeStart, LocalDateTime rangeEnd, PageRequest page,
                                             HttpServletRequest httpRequest, String app, String sort) {
-        if (nonNull(rangeEnd) && rangeEnd.isBefore(rangeStart)) {
-            throw new NumberFormatException("Дата конца не может быть раньше даты начала.");
+        if (nonNull(rangeStart) && nonNull(rangeEnd)) {
+            if (rangeEnd.isBefore(rangeStart)) {
+                throw new NumberFormatException("Дата конца не может быть раньше даты начала.");
+            }
         }
         statsClient.postHits(httpRequest, app);
         BooleanExpression conditions = getAllForPublic(text, paid, onlyAvailable, categories, rangeStart, rangeEnd);
         List<EventShortDto> events = eventRepository.findAll(conditions, page).stream()
                 .map(EventMapper::toShortEventDto).collect(Collectors.toList());
-        List<StatsDto> statsDtos = statsClient.getStats(LocalDateTime.now().minusYears(1), LocalDateTime.now(),
+        List<StatsDto> statsDtos = statsClient.getStats(LocalDateTime.now().minusDays(1000), LocalDateTime.now(),
                 createUris(events), true);
         return createStats(events, sort, statsDtos);
     }
@@ -210,7 +212,7 @@ public class EventServiceImpl implements EventService {
         if (nonNull(rangeEnd)) {
             conditions.and(qEvent.eventDate.between(rangeStart, rangeEnd));
         } else {
-            conditions.and(qEvent.eventDate.after(rangeStart));
+            conditions.and(qEvent.eventDate.after(LocalDateTime.now()));
         }
         return conditions;
     }

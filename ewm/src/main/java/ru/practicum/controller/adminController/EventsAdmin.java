@@ -3,6 +3,7 @@ package ru.practicum.controller.adminController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,22 +27,22 @@ public class EventsAdmin {
     private final EventService eventService;
 
     @GetMapping
-    public EventFullDto getAll(@RequestParam(value = "users[]", required = false) List<Long> users,
-                               @RequestParam(required = false) List<State> states,
-                               @RequestParam(value = "categories[]", required = false) List<Long> categories,
-                               @RequestParam(required = false)
-                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-                               @RequestParam(required = false)
-                               @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
-                               @RequestParam(required = false, defaultValue = "0")
-                               @PositiveOrZero Integer from,
-                               @RequestParam(required = false, defaultValue = "10")
-                               @Positive Integer size) {
-        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size);
-        List<EventFullDto> eve = eventService.getAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
-        EventFullDto ddd = eve.stream().findFirst().orElseThrow();
-        log.info(ddd.toString());
-        return ddd;
+    public List<EventFullDto> getAll(@RequestParam(value = "users[]", required = false) List<Long> users,
+                                     @RequestParam(required = false) List<State> states,
+                                     @RequestParam(value = "categories[]", required = false) List<Long> categories,
+                                     @RequestParam(required = false)
+                                     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
+                                     @RequestParam(required = false)
+                                     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+                                     @RequestParam(required = false, defaultValue = "0")
+                                     @PositiveOrZero Integer from,
+                                     @RequestParam(required = false, defaultValue = "10")
+                                     @Positive Integer size) {
+        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size,
+                Sort.by("eventDate").descending());
+        List<EventFullDto> events = eventService.getAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
+        log.info(events.toString());
+        return events;
     }
 
     @PatchMapping("/{eventId}")

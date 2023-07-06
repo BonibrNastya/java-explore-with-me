@@ -15,8 +15,6 @@ import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static java.util.Objects.isNull;
-
 @RestController
 @RequestMapping(path = "/events")
 @RequiredArgsConstructor
@@ -37,9 +35,6 @@ public class EventsPublic {
                                       @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                       @RequestParam(defaultValue = "10") @Positive Integer size,
                                       HttpServletRequest request) {
-        if (isNull(rangeStart) || isNull(rangeEnd)) {
-            rangeStart = LocalDateTime.now();
-        }
         PageRequest page;
         if (sort.equals("EVENT_DATE")) {
             Sort sortedBy = Sort.by("eventDate").descending();

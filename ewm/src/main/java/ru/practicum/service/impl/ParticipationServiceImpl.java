@@ -47,7 +47,7 @@ public class ParticipationServiceImpl implements ParticipationService {
         if (!State.PUBLISHED.equals(event.getState())) {
             throw new IllegalStateException("Нельзя участвовать в неопубликованном событии.");
         }
-        if (nonNull(event.getParticipantLimit()) && event.getParticipantLimit().equals(event.getConfirmedRequests())) {
+        if (event.getParticipantLimit() != 0 && event.getParticipantLimit().equals(event.getConfirmedRequests())) {
             throw new IllegalStateException("У события достигнут лимит запросов на участие.");
         }
         Participation participation = ParticipationMapper.toParticipation(requester, event);
