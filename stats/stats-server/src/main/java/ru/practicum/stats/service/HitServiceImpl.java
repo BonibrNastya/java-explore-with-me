@@ -1,19 +1,18 @@
 package ru.practicum.stats.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.HitDto;
-import ru.practicum.stats.exception.DateTimeException;
+import ru.practicum.stats.dto.StatsDto;
 import ru.practicum.stats.mapper.HitMapper;
-import ru.practicum.stats.model.Stats;
 import ru.practicum.stats.repository.HitRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
+import static java.util.Objects.isNull;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,7 +26,7 @@ public class HitServiceImpl implements HitService {
     }
 
     @Override
-    public List<Stats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+    public List<StatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         validDate(start, end);
         if (unique) {
             if (!uris.isEmpty()) {
@@ -41,8 +40,8 @@ public class HitServiceImpl implements HitService {
     }
 
     private void validDate(LocalDateTime start, LocalDateTime end) {
-        if (end.isBefore(start)) {
-            throw new DateTimeException("Дата конца не может быть перед датой начала.");
+        if (isNull(start) || isNull(end) || end.isBefore(start)) {
+            throw new NumberFormatException("Дата конца не может быть раньше даты начала.");
         }
     }
 }
