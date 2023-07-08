@@ -611,7 +611,7 @@
 			"response": []
 		},
 		{
-			"name": "Добавление нового комментария к неопубликованному событию",
+			"name": "Добавление нового комментария к несуществующему событию",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -647,7 +647,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/users/:userId/comments?&eventId=2",
+					"raw": "http://localhost:8080/users/:userId/comments?&eventId=10000",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -665,7 +665,7 @@
 						},
 						{
 							"key": "eventId",
-							"value": "2",
+							"value": "10000",
 							"description": "(Required) id текущего события"
 						}
 					],
@@ -742,7 +742,7 @@
 					"variable": [
 						{
 							"key": "userId",
-							"value": "100",
+							"value": "10000",
 							"description": "(Required) id текущего пользователя"
 						}
 					]
@@ -849,7 +849,7 @@
 					"variable": [
 						{
 							"key": "userId",
-							"value": "100"
+							"value": "10000"
 						},
 						{
 							"key": "commentId",
@@ -973,7 +973,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/comments?eventId=100",
+					"raw": "http://localhost:8080/comments?eventId=10000",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -985,7 +985,7 @@
 					"query": [
 						{
 							"key": "eventId",
-							"value": "100"
+							"value": "10000"
 						}
 					]
 				}
@@ -1067,7 +1067,7 @@
 					"variable": [
 						{
 							"key": "userId",
-							"value": "100"
+							"value": "10000"
 						}
 					]
 				}
@@ -1155,7 +1155,7 @@
 					"variable": [
 						{
 							"key": "userId",
-							"value": "100"
+							"value": "10000"
 						},
 						{
 							"key": "commentId",
