@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @Table(name = "participations")
 public class Participation {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne
@@ -26,8 +25,6 @@ public class Participation {
     @ManyToOne
     @JoinColumn(name = "event_id")
     private Event event;
-    @Column(name = "created")
     private LocalDateTime created;
-    @Column(name = "status")
     private Status status;
 }

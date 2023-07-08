@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.HitDto;
 import ru.practicum.stats.dto.StatsDto;
+import ru.practicum.stats.exception.BadRequestException;
 import ru.practicum.stats.mapper.HitMapper;
 import ru.practicum.stats.repository.HitRepository;
 
@@ -41,7 +42,7 @@ public class HitServiceImpl implements HitService {
 
     private void validDate(LocalDateTime start, LocalDateTime end) {
         if (isNull(start) || isNull(end) || end.isBefore(start)) {
-            throw new NumberFormatException("Дата конца не может быть раньше даты начала.");
+            throw new BadRequestException("Дата конца не может быть раньше даты начала.");
         }
     }
 }

@@ -17,12 +17,9 @@ import java.util.List;
 @Table(name = "compilations")
 public class Compilation {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "pinned")
     private Boolean pinned;
-    @Column(name = "title")
     private String title;
     @ManyToMany
     @JoinTable(name = "compilations_events",

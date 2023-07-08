@@ -23,8 +23,9 @@ public class CompilMapper {
                 .id(compilation.getId())
                 .pinned(compilation.getPinned())
                 .title(compilation.getTitle())
-                .events(compilation.getEvents() != null ? compilation.getEvents()
-                        .stream().map(EventMapper::toShortEventDto).collect(Collectors.toList()) : new ArrayList<>())
+                .events(compilation.getEvents() != null ? compilation.getEvents().stream()
+                        .map(EventMapper::toShortEventDto)
+                        .collect(Collectors.toList()) : new ArrayList<>())
                 .build();
     }
 

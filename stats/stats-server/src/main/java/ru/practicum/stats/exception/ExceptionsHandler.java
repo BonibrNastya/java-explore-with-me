@@ -10,9 +10,9 @@ import java.util.Arrays;
 
 @RestControllerAdvice
 public class ExceptionsHandler {
-    @ExceptionHandler(NumberFormatException.class)
+    @ExceptionHandler
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ApiError exceptionsHandler(Throwable e) {
+    public ApiError badRequestHandler(BadRequestException e) {
         ApiError apiError = new ApiError();
         apiError.getErrors().add(Arrays.toString(e.getStackTrace()));
         apiError.setStatus(HttpStatus.BAD_REQUEST);

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.CategoryDto;
 import ru.practicum.dto.NewCategoryDto;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.CategoryMapper;
 import ru.practicum.model.Category;
@@ -33,8 +34,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryDto> getAll(PageRequest page) {
-        return categoryRepository.findAll(page)
-                .stream().map(CategoryMapper::toCategoryDto).collect(Collectors.toList());
+        return categoryRepository.findAll(page).stream()
+                .map(CategoryMapper::toCategoryDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -55,9 +57,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void delete(Long categoryId) {
         Category category = getCategoryOrException(categoryId);
-        List<Event> events = eventRepository.findAllByCategory_Id(categoryId);
+        List<Event> events = eventRepository.findAllByCategoryId(categoryId);
         if (!events.isEmpty()) {
-            throw new IllegalStateException("С категорией не должно быть связано ни одного события.");
+            throw new ConflictException("С категорией не должно быть связано ни одного события.");
         }
         categoryRepository.delete(category);
     }

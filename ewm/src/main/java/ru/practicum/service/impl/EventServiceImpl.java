@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.*;
 import ru.practicum.dto.enums.State;
 import ru.practicum.dto.enums.StateAdmin;
+import ru.practicum.exception.BadRequestException;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.model.Category;
@@ -55,8 +57,9 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventShortDto> getAllPrivate(Long userId, PageRequest page) {
         getUserOrException(userId);
-        return eventRepository.findAllByInitiator_Id(userId, page).stream()
-                .map(EventMapper::toShortEventDto).collect(Collectors.toList());
+        return eventRepository.findAllByInitiatorId(userId, page).stream()
+                .map(EventMapper::toShortEventDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -69,7 +72,8 @@ public class EventServiceImpl implements EventService {
     public List<EventFullDto> getAllAdmin(List<Long> users, List<State> states, List<Long> categories,
                                           LocalDateTime rangeStart, LocalDateTime rangeEnd, PageRequest page) {
         final BooleanExpression condition = getAllForAdmin(users, states, categories, rangeStart, rangeEnd);
-        return eventRepository.findAll(condition, page).stream().map(EventMapper::toEventFull)
+        return eventRepository.findAll(condition, page).stream()
+                .map(EventMapper::toEventFull)
                 .collect(Collectors.toList());
     }
 
@@ -79,13 +83,14 @@ public class EventServiceImpl implements EventService {
                                             HttpServletRequest httpRequest, String app, String sort) {
         if (nonNull(rangeStart) && nonNull(rangeEnd)) {
             if (rangeEnd.isBefore(rangeStart)) {
-                throw new NumberFormatException("Дата конца не может быть раньше даты начала.");
+                throw new BadRequestException("Дата конца не может быть раньше даты начала.");
             }
         }
         statsClient.postHits(httpRequest, app);
         BooleanExpression conditions = getAllForPublic(text, paid, onlyAvailable, categories, rangeStart, rangeEnd);
         List<EventShortDto> events = eventRepository.findAll(conditions, page).stream()
-                .map(EventMapper::toShortEventDto).collect(Collectors.toList());
+                .map(EventMapper::toShortEventDto)
+                .collect(Collectors.toList());
         List<StatsDto> statsDtos = statsClient.getStats(LocalDateTime.now().minusDays(1000), LocalDateTime.now(),
                 createUris(events), true);
         return createStats(events, sort, statsDtos);
@@ -98,7 +103,9 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Событие не найдено."));
         EventFullDto eventDto = EventMapper.toEventFull(event);
         StatsDto statsDto = statsClient.getStats(LocalDateTime.now().minusDays(1000), LocalDateTime.now(),
-                List.of("/events/" + eventDto.getId()), true).stream().findAny().get();
+                        List.of("/events/" + eventDto.getId()), true).stream()
+                .findAny()
+                .get();
         eventDto.setViews(statsDto.getHits());
         return eventDto;
     }
@@ -109,7 +116,7 @@ public class EventServiceImpl implements EventService {
         Event event = getEventOrException(eventId);
         isAfterHours(event.getEventDate(), 2);
         if (event.getState().equals(PUBLISHED)) {
-            throw new IllegalStateException("Изменить можно только отмененные события " +
+            throw new ConflictException("Изменить можно только отмененные события " +
                     "или события в состоянии ожидания модерации.");
         }
         getUserOrException(userId);
@@ -126,7 +133,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateAdmin(Long eventId, UpdateEventAdminRequest request) {
         Event event = getEventOrException(eventId);
         if (event.getState().equals(PUBLISHED)) {
-            throw new IllegalStateException("Событие уже опубликовано.");
+            throw new ConflictException("Событие уже опубликовано.");
         }
         isAfterHours(event.getEventDate(), 1);
         if (nonNull(request.getCategory())) {
@@ -136,7 +143,7 @@ public class EventServiceImpl implements EventService {
         Event update = EventMapper.toEventFromUpdateAdmin(event, request);
         if (nonNull(request.getStateAction())) {
             if (request.getStateAction().equals(StateAdmin.PUBLISH_EVENT) && !event.getState().equals(State.PENDING)) {
-                throw new IllegalStateException("Событие можно публиковать, " +
+                throw new ConflictException("Событие можно публиковать, " +
                         "только если оно в состоянии ожидания публикации");
             } else if (request.getStateAction().equals(StateAdmin.PUBLISH_EVENT)) {
                 update.setState(PUBLISHED);
@@ -165,7 +172,7 @@ public class EventServiceImpl implements EventService {
 
     private static void isAfterHours(LocalDateTime localDateTime, int time) {
         if (localDateTime.isBefore(LocalDateTime.now().plusHours(time))) {
-            throw new IllegalStateException("Дата и время на которые намечено событие не может быть раньше, " +
+            throw new ConflictException("Дата и время на которые намечено событие не может быть раньше, " +
                     "чем через " + time + "час(а) от текущего момента.");
         }
     }
@@ -218,8 +225,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private List<String> createUris(List<EventShortDto> eventDtos) {
-        return eventDtos
-                .stream()
+        return eventDtos.stream()
                 .map(r -> "/events/" + r.getId())
                 .collect(Collectors.toList());
     }
@@ -230,11 +236,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private List<EventShortDto> createStats(List<EventShortDto> event, String sort, List<StatsDto> stats) {
-        Map<Long, Long> longMap = stats
-                .stream().collect(Collectors.toMap((s -> inId(s.getUri())), (StatsDto::getHits)));
+        Map<Long, Long> longMap = stats.stream()
+                .collect(Collectors.toMap((s -> inId(s.getUri())), (StatsDto::getHits)));
         event.forEach(e -> e.setViews(longMap.get(e.getId())));
         if (sort.equals("VIEWS")) {
-            return event.stream().sorted(Comparator.comparingLong(EventShortDto::getViews))
+            return event.stream()
+                    .sorted(Comparator.comparingLong(EventShortDto::getViews))
                     .collect(Collectors.toList());
         }
         return event;

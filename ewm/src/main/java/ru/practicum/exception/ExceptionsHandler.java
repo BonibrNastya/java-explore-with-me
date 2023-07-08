@@ -24,9 +24,9 @@ public class ExceptionsHandler {
         return apiError;
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, IllegalStateException.class})
+    @ExceptionHandler({ConstraintViolationException.class, ConflictException.class})
     @ResponseStatus(value = HttpStatus.CONFLICT)
-    public ApiError illegalStateHandler(Throwable e) {
+    public ApiError conflictHandler(Throwable e) {
         ApiError apiError = new ApiError();
         apiError.getErrors().add(Arrays.toString(e.getStackTrace()));
         apiError.setStatus(HttpStatus.CONFLICT);
@@ -36,7 +36,7 @@ public class ExceptionsHandler {
         return apiError;
     }
 
-    @ExceptionHandler({NumberFormatException.class, MethodArgumentNotValidException.class})
+    @ExceptionHandler({BadRequestException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     public ApiError numberFormatHandler(Throwable e) {
         ApiError apiError = new ApiError();

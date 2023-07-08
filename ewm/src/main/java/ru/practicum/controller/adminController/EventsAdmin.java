@@ -40,8 +40,7 @@ public class EventsAdmin {
                                      @Positive Integer size) {
         PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size,
                 Sort.by("id").descending());
-        List<EventFullDto> events = eventService.getAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
-        return events;
+        return eventService.getAllAdmin(users, states, categories, rangeStart, rangeEnd, page);
     }
 
     @PatchMapping("/{eventId}")

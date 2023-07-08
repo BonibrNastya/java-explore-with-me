@@ -8,6 +8,7 @@ import ru.practicum.dto.EventRequestStatusUpdateResult;
 import ru.practicum.dto.ParticipationRequestDto;
 import ru.practicum.dto.enums.State;
 import ru.practicum.dto.enums.Status;
+import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.ParticipationMapper;
 import ru.practicum.model.Event;
@@ -38,17 +39,17 @@ public class ParticipationServiceImpl implements ParticipationService {
     public ParticipationRequestDto create(Long userId, Long eventId) {
         User requester = getUserOrException(userId);
         Event event = getEventOrException(eventId);
-        if (participationRepository.existsByRequester_IdAndEvent_Id(userId, eventId)) {
-            throw new IllegalStateException("Нельзя добавить повторный запрос.");
+        if (participationRepository.existsByRequesterIdAndEventId(userId, eventId)) {
+            throw new ConflictException("Нельзя добавить повторный запрос.");
         }
         if (userId.equals(event.getInitiator().getId())) {
-            throw new IllegalStateException("Инициатор события не может добавить запрос на участие в своём событии.");
+            throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии.");
         }
         if (!State.PUBLISHED.equals(event.getState())) {
-            throw new IllegalStateException("Нельзя участвовать в неопубликованном событии.");
+            throw new ConflictException("Нельзя участвовать в неопубликованном событии.");
         }
         if (event.getParticipantLimit() != 0 && event.getParticipantLimit().equals(event.getConfirmedRequests())) {
-            throw new IllegalStateException("У события достигнут лимит запросов на участие.");
+            throw new ConflictException("У события достигнут лимит запросов на участие.");
         }
         Participation participation = ParticipationMapper.toParticipation(requester, event);
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
@@ -66,30 +67,31 @@ public class ParticipationServiceImpl implements ParticipationService {
     @Override
     public List<ParticipationRequestDto> getAll(Long userId) {
         getUserOrException(userId);
-        return requestDtoList(participationRepository.findAllByRequester_Id(userId));
+        return requestDtoList(participationRepository.findAllByRequesterId(userId));
     }
 
     @Override
     public List<ParticipationRequestDto> getByEventId(Long userId, Long eventId) {
         getUserOrException(userId);
         getEventOrException(eventId);
-        return requestDtoList(participationRepository.findAllByEvent_Id(eventId));
+        return requestDtoList(participationRepository.findAllByEventId(eventId));
     }
 
     @Override
     @Transactional
     public EventRequestStatusUpdateResult update(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
         getUserOrException(userId);
-        Event event = eventRepository.findByIdAndInitiator_Id(eventId, userId).orElseThrow(
+        Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(
                 () -> new NotFoundException("Событие не найдено."));
         if (!event.getRequestModeration() || isNull(event.getParticipantLimit())) {
-            throw new IllegalStateException("Лимит заявок равен 0 или отключена пре-модерация заявок. " +
+            throw new ConflictException("Лимит заявок равен 0 или отключена пре-модерация заявок. " +
                     "Подтверждение заявок не требуется.");
         }
         List<Participation> participations = participationRepository.findAllById(request.getRequestIds());
-        boolean isNotPending = participations.stream().anyMatch(p -> !p.getStatus().equals(Status.PENDING));
+        boolean isNotPending = participations.stream()
+                .anyMatch(p -> !p.getStatus().equals(Status.PENDING));
         if (isNotPending) {
-            throw new IllegalStateException("Статус можно изменить только у заявок, находящихся в состоянии ожидания");
+            throw new ConflictException("Статус можно изменить только у заявок, находящихся в состоянии ожидания");
         }
         if (request.getStatus().equals(Status.CONFIRMED)) {
             return changeStatusToConfirmed(request.getRequestIds(), event);
@@ -97,10 +99,11 @@ public class ParticipationServiceImpl implements ParticipationService {
             participations.forEach(p -> p.setStatus(Status.REJECTED));
             participationRepository.saveAll(participations);
             List<ParticipationRequestDto> participationDtos = participations.stream()
-                    .map(ParticipationMapper::toParticipationDto).collect(Collectors.toList());
+                    .map(ParticipationMapper::toParticipationDto)
+                    .collect(Collectors.toList());
             return new EventRequestStatusUpdateResult(List.of(), participationDtos);
         } else {
-            throw new IllegalStateException("Заявку можно либо подтвердить, либо отклонить.");
+            throw new ConflictException("Заявку можно либо подтвердить, либо отклонить.");
         }
     }
 
@@ -120,7 +123,7 @@ public class ParticipationServiceImpl implements ParticipationService {
         Integer limit = event.getParticipantLimit();
         Integer confirmedRequests = event.getConfirmedRequests();
         if (nonNull(limit) && limit.equals(confirmedRequests)) {
-            throw new IllegalStateException("Нельзя подтвердить заявку, " +
+            throw new ConflictException("Нельзя подтвердить заявку, " +
                     "если уже достигнут лимит по заявкам на данное событие");
         }
         if (nonNull(confirmedRequests)) {
@@ -137,7 +140,9 @@ public class ParticipationServiceImpl implements ParticipationService {
             p.setStatus(Status.CONFIRMED);
             requestCount++;
         }
-        List<Long> confirmedIds = confirmed.stream().map(Participation::getId).collect(Collectors.toList());
+        List<Long> confirmedIds = confirmed.stream()
+                .map(Participation::getId)
+                .collect(Collectors.toList());
         List<Long> rejectedIds = new ArrayList<>(ids);
         rejectedIds.removeAll(confirmedIds);
         rejected = participationRepository.findAllById(rejectedIds);
@@ -149,8 +154,11 @@ public class ParticipationServiceImpl implements ParticipationService {
         event.setConfirmedRequests(requestCount);
         eventRepository.save(event);
         return new EventRequestStatusUpdateResult(confirmed.stream()
-                .map(ParticipationMapper::toParticipationDto).collect(Collectors.toList()),
-                rejected.stream().map(ParticipationMapper::toParticipationDto).collect(Collectors.toList()));
+                .map(ParticipationMapper::toParticipationDto)
+                .collect(Collectors.toList()),
+                rejected.stream()
+                        .map(ParticipationMapper::toParticipationDto)
+                        .collect(Collectors.toList()));
     }
 
     private User getUserOrException(Long userId) {
@@ -169,6 +177,8 @@ public class ParticipationServiceImpl implements ParticipationService {
     }
 
     private List<ParticipationRequestDto> requestDtoList(List<Participation> participation) {
-        return participation.stream().map(ParticipationMapper::toParticipationDto).collect(Collectors.toList());
+        return participation.stream()
+                .map(ParticipationMapper::toParticipationDto)
+                .collect(Collectors.toList());
     }
 }

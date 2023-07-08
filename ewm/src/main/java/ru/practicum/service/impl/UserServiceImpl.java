@@ -46,7 +46,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private List<UserDto> userDtoList(List<User> users) {
-        return users.stream().map(UserMapper::toUserDto).collect(Collectors.toList());
+        return users.stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
     }
 
     private User getUserOrException(Long userId) {
