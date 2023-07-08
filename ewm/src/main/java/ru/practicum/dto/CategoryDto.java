@@ -1,16 +1,16 @@
-package ru.practicum.stats.model;
+package ru.practicum.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Stats {
-    private String app;
-    private String uri;
-    private long hits;
+public class CategoryDto {
+    private Long id;
+    private String name;
 }
